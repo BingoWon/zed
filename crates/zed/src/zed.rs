@@ -589,6 +589,14 @@ fn initialize_panels(
             workspace.add_panel(chat_panel, window, cx);
             workspace.add_panel(notification_panel, window, cx);
             workspace.add_panel(debug_panel, window, cx);
+
+            // 添加 ZedVision 面板
+            zed_vision_sync::init_panel(workspace, window, cx);
+
+            // 注册 ZedVision action
+            workspace.register_action(|workspace: &mut Workspace, _: &zed_vision_sync::ui::ToggleFocus, window: &mut Window, cx: &mut Context<Workspace>| {
+                workspace.toggle_panel_focus::<zed_vision_sync::VisionSyncPanel>(window, cx);
+            });
         })?;
 
         let is_assistant2_enabled = !cfg!(test);

@@ -583,6 +583,7 @@ pub fn main() {
             cx,
         );
         assistant_tools::init(app_state.client.http_client(), cx);
+        zed_vision_sync::init(cx);
         repl::init(app_state.fs.clone(), cx);
         extension_host::init(
             extension_host_proxy,

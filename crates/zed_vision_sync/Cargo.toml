@@ -1,0 +1,38 @@
+[package]
+name = "zed_vision_sync"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
+
+[dependencies]
+# 异步运行时
+tokio = { version = "1.0", features = ["full"] }
+tokio-tungstenite = "0.21"
+futures = "0.3"
+futures-util = "0.3"
+
+# 网络和序列化
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+warp = "0.3"
+
+# Zed 集成
+gpui = { path = "../gpui" }
+workspace = { path = "../workspace" }
+editor = { path = "../editor" }
+ui = { path = "../ui" }
+theme = { path = "../theme" }
+settings = { path = "../settings" }
+zed_actions = { path = "../zed_actions" }
+
+# 日志和错误处理
+log = "0.4"
+thiserror = "1.0"
+anyhow = "1.0"
+
+# 系统信息
+hostname = "0.4"
