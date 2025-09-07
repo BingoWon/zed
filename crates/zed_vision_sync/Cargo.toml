@@ -29,6 +29,15 @@ theme = { path = "../theme" }
 settings = { path = "../settings" }
 zed_actions = { path = "../zed_actions" }
 
+# AI 系统集成
+language_model = { path = "../language_model" }
+agent_settings = { path = "../agent_settings" }
+cloud_llm_client = { path = "../cloud_llm_client" }
+agent = { path = "../agent" }
+assistant_tool = { path = "../assistant_tool" }
+project = { path = "../project" }
+prompt_store = { path = "../prompt_store" }
+
 # 日志和错误处理
 log = "0.4"
 thiserror = "1.0"

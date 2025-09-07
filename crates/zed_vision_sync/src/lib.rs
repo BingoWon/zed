@@ -35,27 +35,78 @@ impl Default for ZedVisionConfig {
 
 /// 统一的 WebSocket 消息协议
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type", content = "payload")]
+#[serde(tag = "type")]
 pub enum ZedVisionMessage {
     // 连接管理
-    ConnectionRequest { device_name: String },
-    ConnectionAccepted { connection_id: Uuid, server_info: ServerInfo },
-    ConnectionRejected { reason: String },
+    ConnectionRequest {
+        #[serde(rename = "payload")]
+        device_name: String
+    },
+    ConnectionAccepted {
+        #[serde(rename = "payload")]
+        payload: ConnectionAcceptedPayload
+    },
+    ConnectionRejected {
+        #[serde(rename = "payload")]
+        reason: String
+    },
+
+    // 现代化客户端握手
+    ClientHandshake {
+        #[serde(rename = "clientType")]
+        client_type: String,
+        version: String,
+        capabilities: Vec<String>,
+    },
 
     // 编辑器状态同步
     EditorStateSync {
-        file_path: Option<String>,
-        cursor_line: u32,
-        cursor_column: u32,
-        content_preview: String,
+        #[serde(rename = "payload")]
+        payload: EditorStateSyncPayload
     },
 
-
+    // AI 对话消息
+    AIConversation {
+        #[serde(rename = "payload")]
+        payload: AIConversationPayload
+    },
 
     // 心跳和控制
     Ping,
     Pong,
-    Echo { original: serde_json::Value, timestamp: u64 },
+    Echo {
+        #[serde(rename = "payload")]
+        payload: EchoPayload
+    },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectionAcceptedPayload {
+    pub connection_id: Uuid,
+    pub server_info: ServerInfo,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EditorStateSyncPayload {
+    pub file_path: Option<String>,
+    pub cursor_line: u32,
+    pub cursor_column: u32,
+    pub content_preview: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AIConversationPayload {
+    pub id: String,
+    pub session_id: String,
+    pub role: String,
+    pub content: String,
+    pub timestamp: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EchoPayload {
+    pub original: serde_json::Value,
+    pub timestamp: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -63,6 +114,27 @@ pub struct ServerInfo {
     pub name: String,
     pub version: String,
     pub platform: String,
+}
+
+/// AI 对话消息角色
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum MessageRole {
+    #[serde(rename = "user")]
+    User,
+    #[serde(rename = "assistant")]
+    Assistant,
+    #[serde(rename = "system")]
+    System,
+}
+
+/// AI 对话消息结构
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AIConversationMessage {
+    pub id: String,
+    pub session_id: String,
+    pub role: MessageRole,
+    pub content: String,
+    pub timestamp: u64,
 }
 
 #[derive(Debug, Clone)]
@@ -154,6 +226,13 @@ impl ZedVisionSync {
                 }
             });
         });
+    }
+
+    /// 设置 Workspace 引用以启用 AI 功能
+    pub fn set_workspace(&mut self, workspace: gpui::WeakEntity<workspace::Workspace>) {
+        // 暂时存储 workspace 引用，后续需要传递给 ServiceManager
+        log::info!("🎯 Workspace reference set for AI integration");
+        // TODO: 需要重构 ServiceManager 的创建方式以支持 Workspace 传递
     }
 
     fn start_connection_cleanup(&mut self) {
@@ -254,12 +333,18 @@ pub fn init_panel(workspace: &mut workspace::Workspace, window: &mut gpui::Windo
         status_bar.add_right_item(status_button, window, cx);
     });
 
+    // 设置 Workspace 引用以启用 AI 功能
+    let workspace_weak = workspace.weak_handle();
+    sync_service.update(cx, |service, _cx| {
+        service.set_workspace(workspace_weak);
+    });
+
     // 自动启动 ZedVision 服务（如果配置启用）
     let config = ZedVisionConfig::default();
     if config.enabled {
         sync_service.update(cx, |service, cx| {
             service.start_service(cx);
         });
-        log::info!("ZedVision service auto-started on Zed startup");
+        log::info!("ZedVision service auto-started on Zed startup with AI integration");
     }
 }
